@@ -1,0 +1,3 @@
+post-build=Android/cm_otter/otter:4.2.1/JOP40D/eng.build.20121225.153625:userdebug/test-keys
+post-timestamp=1356467839
+pre-device=otter
