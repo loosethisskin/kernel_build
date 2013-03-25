@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -a
+
 KERNEL_SOURCE_DIR="$PWD"
 SCRIPT_NAME=`basename $0`
 SCRIPT_DIR=`dirname $0`
@@ -43,22 +45,20 @@ cp -r $BUILD_ROOT_DIR/$DEVICE/ramdisk $TARGET_DIR/ramdisk
 cd $TARGET_DIR
 
 echo "Building ramdisk..."
-
-cd ramdisk
-# make sure all directories are created because git doesn't save empty directories
-mkdir -p data dev proc sbin sys system
-chmod 750 init*
-chmod 750 sbin/adbd
-chmod 644 default.prop
-chmod 640 fstab.$DEVICE
-chmod 644 ueventd*
-find . | cpio -o -H newc | gzip > ../ramdisk.cpio.gz
+if [ ! -f ${BUILD_ROOT_DIR}/${DEVICE}/make-ramdisk.sh ]; then
+  echo "Error: ${DEVICE}/make-ramdisk.sh not found"
+  exit 1
+fi
+${BUILD_ROOT_DIR}/${DEVICE}/make-ramdisk.sh
 
 cd $TARGET_DIR
 
 echo "Building boot image..."
-
-mkbootimg --kernel zImage --cmdline 'mem=512M console=/dev/null' --base 0x80000000 --pagesize 4096 --ramdisk ramdisk.cpio.gz --output boot.img
+if [ ! -f ${BUILD_ROOT_DIR}/${DEVICE}/make-bootimg.sh ]; then
+  echo "Error: ${DEVICE}/make-bootimg.sh not found"
+  exit 1
+fi
+${BUILD_ROOT_DIR}/${DEVICE}/make-bootimg.sh
 [ $? -ne 0 ] && echo "Error: failed to make boot image." && exit 1
 
 echo "Building zip file..."
