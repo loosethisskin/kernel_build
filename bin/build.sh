@@ -7,7 +7,7 @@ build_kernel()
   echo ""
 
   make O=$KERNEL_OUT ARCH=arm distclean
-  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" ${DEVICE}_android_defconfig
+  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" ${DEFCONFIG}
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" zImage
 }
 
@@ -64,18 +64,19 @@ echo SCRIPT_DIR=$SCRIPT_DIR
 echo BUILD_ROOT_DIR=$BUILD_ROOT_DIR
 echo "--------------------------------------------------------------------------------"
 
-if [ -z "$2" ]; then
-  echo "usage: build.sh <device> <toolchaindir> [jobs]"
-  echo "example: build.sh otter /u01/dev/android/git/toolchains/linaro/linaro-4.7"
+if [ -z "$3" ]; then
+  echo "usage: build.sh <device> <defconfig> <toolchaindir> [jobs]"
+  echo "example: build.sh otter otter_android_defconfig /u01/dev/android/git/toolchains/linaro/linaro-4.7"
   exit 1
 fi
-dop="$3"
+dop="$4"
 if [ -z "$dop" ]; then
   dop=`cat /proc/cpuinfo| grep processor | wc -l`
 fi
 
 DEVICE=$1
-TOOLCHAIN_DIR=$2
+DEFCONFIG=$2
+TOOLCHAIN_DIR=$3
 
 v_toolchain=`basename $TOOLCHAIN_DIR`
 v_gcc=gcc-`gcc --version |head -1 |awk '{ print $NF }'`
