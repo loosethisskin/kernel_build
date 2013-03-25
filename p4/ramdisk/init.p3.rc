@@ -1,0 +1,399 @@
+import init.p3.usb.rc
+
+on early-init
+    mount debugfs debugfs /sys/kernel/debug
+
+on init
+    # See storage config details at http://source.android.com/tech/storage/
+    mkdir /mnt/shell/emulated 0700 shell shell
+    mkdir /storage/emulated 0555 root root
+
+    export EXTERNAL_STORAGE /storage/emulated/legacy
+    export EMULATED_STORAGE_SOURCE /mnt/shell/emulated
+    export EMULATED_STORAGE_TARGET /storage/emulated
+
+    # Support legacy paths
+    symlink /storage/emulated/legacy /sdcard
+    symlink /storage/emulated/legacy /mnt/sdcard
+    symlink /storage/emulated/legacy /storage/sdcard0
+    symlink /mnt/shell/emulated/0 /storage/emulated/legacy
+
+    # create directory for mounting usb drives
+    mkdir /storage/usbdrive0 0664 system system
+    # for backwards compatibility
+    symlink /storage/usbdrive0 /usbdrive
+    symlink /storage/usbdrive0 /mnt/usbdrive
+
+    mkdir /efs 0771 system system
+    
+    write /sys/block/mmcblk0/queue/iosched/slice_idle 0
+
+# Vibetonz
+    export VIBE_PIPE_PATH /dev/pipes
+    mkdir /dev/pipes 0771 shell shell
+
+on fs
+    # Device Encryption by Security R&D Group.
+    exec set_crypt_meta_info /dev/block/platform/sdhci-tegra.3/by-num/p8 /data
+    exec sfsck /dev/block/platform/sdhci-tegra.3/by-num/p8 ext4 encryptable
+
+    mount_all ./fstab.p3
+
+    setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
+
+on post-fs-data
+# we will remap this as /storage/sdcard0 with the sdcard fuse tool
+    mkdir /data/media 0775 media_rw media_rw
+    chown media_rw media_rw /data/media
+
+# change back to bluetooth from system
+    chown bluetooth net_bt_stack /data/misc/bluetooth
+
+# Fuse sdcard
+    setprop ro.crypto.fuse_sdcard true
+
+    chown system radio /efs
+    chmod 0775 /efs
+    mkdir /efs/wifi
+    chown radio system /efs/wifi
+    chmod 0775 /efs/wifi
+
+    # For P3
+    mkdir /efs/wifi/mac
+    chown wifi wifi /efs/wifi/mac
+    chmod 0775 /efs/wifi/mac
+
+    chown system radio /efs/wifi/.mac.info
+    chown system radio /data/.mac.info
+    chmod 0664 /efs/wifi/.mac.info
+    chmod 0664 /data/.mac.info
+    # For P4VZW
+    chown radio system /efs/nv_data.bin.md5
+    chown radio system /efs/nv_data.bin
+    chmod 0770 /efs/nv_data.bin.md5
+    chmod 0770 /efs/nv_data.bin
+
+    mkdir /data/wifi 0771 wifi wifi
+    mkdir /data/misc/wifi 0771 wifi wifi
+    chmod 0771 /data/misc/wifi/
+    chmod 0771 /data/wifi/
+    mkdir /data/misc/dhcp 0771 dhcp dhcp
+    mkdir /data/misc/wifi/sockets 0771 wifi wifi
+    chmod 0664 /system/etc/wifi/wpa_supplicant.conf
+    chown dhcp dhcp /data/misc/dhcp
+    mkdir /data/misc/dhcpcd 0771 dhcp dhcp
+    chown dhcp dhcp /data/misc/dhcpcd
+    chown dhcp dhcp /data/misc/dhcp
+
+# Change Permission /data/app for booting time
+    chmod 0771 /data/app
+    chown system system /data/app
+
+# MHL
+    chown system radio /sys/devices/platform/acc_con/MHD_file
+
+# Hdcp
+    chown system system /dev/nvhdcp1
+    chmod 0660 /dev/nvhdcp1
+    chown system system /system/etc/hdmi/dectable.dat
+    chmod 0440 /system/etc/hdmi/dectable.dat
+    chown system system /system/etc/hdmi/dectable1.dat
+    chmod 0440 /system/etc/hdmi/dectable1.dat
+
+# SEC_MM_DRM
+  # Found in P4
+
+    # DRM directory creation
+    mkdir /system/etc/security/.drm 0775
+    chown root root /system/etc/security/.drm
+    chmod 0775 /system/etc/security/.drm
+
+    # Added for Playready DRM Support
+    mkdir /data/data/.drm 0775
+    chown drm system /data/data/.drm
+    chmod 0775 /data/data/.drm
+    mkdir /data/data/.drm/.playready 0775
+    chown drm system /data/data/.drm/.playready
+    chmod 0775 /data/data/.drm/.playready
+
+    # Added drm folder to copy drm plugins
+    mkdir /system/lib/drm 0775
+    chown root root /system/lib/drm
+    chmod 0775 /system/lib/drm
+
+    # DivX DRM
+    mkdir /efs/.files 0775
+    mkdir /efs/.files/.dx1 0775
+    mkdir /efs/.files/.dm33 0775
+    mkdir /efs/.files/.mp301 0775
+    chown media system /efs/.files/.dx1
+    chown media system /efs/.files/.dm33
+    chown media system /efs/.files/.mp301
+    chmod 0775 /efs/.files/.dx1
+    chmod 0775 /efs/.files/.dm33
+    chmod 0775 /efs/.files/.mp301
+
+# create log system for radio
+    mkdir /data/log 0775 system log
+    chown system log /data/log
+    chmod 0775 /data/log
+    chmod 0775 /data/anr
+
+# HATP Result Dir
+    mkdir /data/misc/radio 0771 radio system
+
+# Set indication (checked by vold) that we have finished this action
+    setprop vold.post_fs_data_done 1
+
+# change owner for writable sysfs files
+    chown system radio /sys/class/power_supply/battery/batt_reset_soc
+    chown system radio /sys/class/power_supply/battery/batt_reset_cap
+    chown system radio /sys/class/power_supply/battery/fg_reg
+    chown system radio /sys/class/power_supply/battery/charging_mode_booting
+
+on boot
+# OTG Test
+    chown system radio /sys/class/host_notify/usb_otg/booster
+    chmod 0664 /sys/class/host_notify/usb_otg/booster
+
+# usb detect
+    mkdir /dev/bus 0755 root root
+    mkdir /dev/bus/usb 0755 root root
+
+# bluetooth
+    # UART device
+    chmod 0660 /dev/ttyHS2
+    chown bluetooth net_bt_stack /dev/ttyHS2
+
+    # power up/down interface
+    chmod 0660 /sys/class/rfkill/rfkill0/state
+    chmod 0660 /sys/class/rfkill/rfkill0/type
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/state
+    chown bluetooth net_bt_stack /sys/class/rfkill/rfkill0/type
+
+    # bluetooth MAC address programming
+    chown bluetooth net_bt_stack ro.bt.bdaddr_path
+    chown bluetooth net_bt_stack /system/etc/bluetooth
+    chown bluetooth net_bt_stack /data/misc/bluetooth
+    setprop ro.bt.bdaddr_path "/data/misc/bluetooth/bdaddr"
+
+# UART/USB path switching
+    chown system radio /sys/class/sec/sec_misc/uartsel
+    chown system radio /sys/class/sec/sec_misc/usbsel
+
+# adc
+    chown system radio /sys/class/sec/sec_adc/adc_test
+
+# backlight
+    chown system system /sys/class/backlight/pwm-backlight/brightness
+
+# Sensor
+    chmod 666 /dev/nvhost-ctrl
+    chmod 666 /dev/nvhost-display
+    chmod 666 /dev/nvhost-dsi
+    chmod 666 /dev/nvhost-gr2d
+    chmod 666 /dev/nvhost-gr3d
+    chmod 666 /dev/nvhost-isp
+    chmod 666 /dev/nvhost-mpe
+    chmod 666 /dev/nvhost-vi
+    chmod 664 /sys/bus/iio/devices/device0/illuminance0_input
+    chmod 664 /sys/bus/iio/devices/device0/proximity_raw
+
+# sensor
+    chown root system /dev/mpu
+    chown root system /dev/mpuirq
+    chown root system /dev/accelirq
+    chown root system /dev/timerirq
+    chown root system /sys/class/proximity/proximity/proximity_avg
+    # For P3
+    chown root system /sys/class/sensors/accelerometer_sensor/p3_accel_cal
+
+    chmod 0660 /dev/mpu
+    chmod 0660 /dev/mpuirq
+    chmod 0660 /dev/accelirq
+    chmod 0660 /dev/timerirq
+    # For P3
+    chmod 0660 /sys/class/sensors/accelerometer_sensor/p3_accel_cal
+
+    chmod 664 /sys/class/sensors/accelerometer_sensor/calibration
+    chown system system /sys/class/sensors/accelerometer_sensor/calibration
+
+# Vibetonz
+    chmod 0660 /dev/tspdrv
+    chown root shell /dev/tspdrv
+
+# CMC623
+    chown system media_rw /sys/class/mdnie/mdnie/mdnie_auto_ove
+    chown system media_rw /sys/class/mdnie/mdnie/mode
+    chown system media_rw /sys/class/mdnie/mdnie/cabc
+    chown system media_rw /sys/class/mdnie/mdnie/outdoor
+    chown system media_rw /sys/class/mdnie/mdnie/mdnie_roi
+    chown system media_rw /sys/class/mdnie/mdnie/scenario
+    chown system media_rw /sys/class/mdnie/mdnie/mdnie_temp
+    chown system media_rw /sys/class/mdnie/mdnie/lcd_power
+    chown system media_rw /sys/class/mdnie/mdnie/lcd_type
+
+# Power management settings
+    write /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor interactive
+    write /sys/devices/system/cpu/cpu1/cpufreq/scaling_governor interactive
+    write /sys/module/cpuidle/parameters/lp2_in_idle 0
+
+# Interactive (initial) setup
+    write /sys/devices/system/cpu/cpufreq/interactive/boost_factor 2
+    write /sys/devices/system/cpu/cpufreq/interactive/input_boost 1
+    write /sys/devices/system/cpu/cpufreq/interactive/sustain_load 80
+
+# Enable KSM
+     write /sys/kernel/mm/ksm/sleep_millisecs 1400
+     write /sys/kernel/mm/ksm/pages_to_scan 200
+     write /sys/kernel/mm/ksm/run 1
+
+# DEBUG_LEVEL
+    chown system radio /sys/devices/platform/sec_debug_level
+    chmod 0664 /sys/devices/platform/sec_debug_level
+    chown system radio /sys/devices/virtual/misc/level/control
+    chmod 0664 /sys/devices/virtual/misc/level/control
+
+# Camera
+    chown system radio /sys/class/sec/sec_s5k5ccgx/cameraflash
+    chown system radio /sys/class/sec/sec_s5k5ccgx/camtype
+    chown system radio /sys/class/sec/sec_s5k5bbgx/camtype
+    # For P3
+    chown root camera /sys/class/sec/sec_imx073/camerafw
+
+# Change permissions on cameraflash so that we can use it with Torch
+    chmod 0666 /sys/devices/virtual/sec/sec_s5k5ccgx/cameraflash
+
+# Touchscreen Config-UI interface
+   chmod 666 /sys/devices/platform/tegra-i2c.0/i2c-0/0-005a/debug_enable
+   chmod 666 /sys/devices/platform/tegra-i2c.0/i2c-0/0-005a/pause_driver
+   chmod 666 /sys/devices/platform/tegra-i2c.0/i2c-0/0-005a/slowscan_enable
+
+# Default Read Ahead value for sdcards
+    write /sys/block/mmcblk0/queue/read_ahead_kb 2048
+
+# Modem interface (For 3g/4g tabs)
+    chown system radio /sys/devices/platform/tegra-ehci.1/ehci_power
+
+# GPS perms
+on property:my.gps=novzw
+    chown root system /dev/ttyHS0
+    chmod 0664 /dev/ttyHS0
+    chown root system /sys/class/sec/gps/pwr_en
+    chmod 0664 /sys/class/sec/gps/pwr_en
+    chown root system /sys/class/sec/gps/nrst
+    chmod 0664 /sys/class/sec/gps/nrst
+    mkdir /data/gps 771 system system
+    chown system system /data/gps
+
+on property:my.gps=vzw
+    chown gps gps /dev/ttyHS0
+    chmod 0600 /dev/ttyHS0
+    mkdir /data/gps 771 system system
+    chown system system /data/gps
+# create data/gps for GPS demon
+    mkdir /data/gps 771 gps system
+    chown gps system /data/gps
+    chmod 0771 /data/gps
+
+service p2p_supplicant /system/bin/wpa_supplicant \
+        -iwlan0 -Dnl80211 -c/data/misc/wifi/wpa_supplicant.conf -N \
+        -ip2p0 -Dnl80211 -c/data/misc/wifi/p2p_supplicant.conf \
+        -e/data/misc/wifi/entropy.bin
+    class main
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service wpa_supplicant /system/bin/wpa_supplicant \
+    -Dnl80211 -iwlan0 -c/data/misc/wifi/wpa_supplicant.conf -e/data/misc/wifi/entropy.bin
+#   we will start as root and wpa_supplicant will switch to user wifi
+#   after setting up the capabilities required for WEXT
+#   user wifi
+#   group wifi inet keystore
+    class main
+    socket wpa_wlan0 dgram 660 wifi wifi
+    disabled
+    oneshot
+
+service dhcpcd_wlan0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_p2p /system/bin/dhcpcd -aABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_bnep0 /system/bin/dhcpcd -ABKL
+    class main
+    disabled
+    oneshot
+
+service dhcpcd_eth0 /system/bin/dhcpcd -ABKL -f/system/etc/dhcpcd/dhcpcd.conf
+    class main
+    disabled
+    oneshot
+
+service iprenew_wlan0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+service iprenew_p2p /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+service iprenew_eth0 /system/bin/dhcpcd -n
+    disabled
+    oneshot
+
+service macloader /system/bin/macloader
+    class main
+    oneshot
+
+# end of wifi
+
+# Start GPS daemon
+on property:my.gps=novzw
+service gpsd /system/bin/gpsd -c /system/etc/gps.xml
+    class main
+    socket gps seqpacket 0660 gps system
+    user gps
+    group system inet sdcard_rw
+
+on property:my.gps=vzw
+service gps-daemon /system/bin/gpsd
+    class main
+    socket gpsd stream 660 gps system
+    user system
+    group system inet
+
+# virtual sdcard daemon running as media_rw (1023)
+service sdcard /system/bin/sdcard /data/media /mnt/shell/emulated 1023 1023
+    class late_start
+
+# bugreport is triggered by the VOLUME-DOWN and VOLUME-UP keys
+service bugreport /system/bin/dumpstate -d -v -o /data/storage/bugreports/bugreport
+    class main
+    disabled
+    oneshot
+    keycodes 115 114
+
+# Mount usb drives as /usbdrive0. Generally usb drives are formatted with FAT
+# filesystem, so we support FAT as of now.
+on device-added-/sys/block/sda
+    mount vfat /dev/block/sda /storage/usbdrive0
+
+on device-removed-/sys/block/sda
+    umount /storage/usbdrive0
+
+# For 3g tabs
+service cpboot-daemon /sbin/cbd -d -o t -p 7
+    class main
+    user root
+    group radio cache inet misc audio sdcard_rw log
+
+service battery_charger /charger
+    class charger
+
