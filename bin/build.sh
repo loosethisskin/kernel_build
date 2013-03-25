@@ -1,18 +1,34 @@
 #!/bin/bash
 
+set -a
+
 build_kernel()
 {
+  # run device specific kernel build script if one exists
+  if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh ]; then
+    echo "Running ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh..."
+    ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh
+    return $?
+  fi
+
   echo ""
   echo "Building kernel ..."
   echo ""
 
-  make O=$KERNEL_OUT ARCH=arm distclean
+  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" distclean
   make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" ${DEFCONFIG}
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" zImage
 }
 
 build_modules()
 {
+  # run device specific modules build script if one exists
+  if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/build-modules.sh ]; then
+    echo "Running ${BUILD_ROOT_DIR}/${DEVICE}/build-modules.sh..."
+    ${BUILD_ROOT_DIR}/${DEVICE}/build_modules.sh
+    return $?
+  fi
+
   echo ""
   echo "Building modules ..."
   echo ""
@@ -29,23 +45,20 @@ build_modules()
     ko=`find $mpath/kernel -type f -name *.ko`
     for i in $ko
     do
-      echo "$TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded $i"
+      echo "$TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded `echo $i | sed -s "s|$KERNEL_SOURCE_DIR/||"`"
       $TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded $i
-      echo "mv $i $KERNEL_MODULES_OUT"
+      echo "mv `echo $i | sed -s "s|$KERNEL_SOURCE_DIR/||"` `echo $KERNEL_MODULES_OUT | sed -s "s|$KERNEL_SOURCE_DIR/||"`"
       mv $i $KERNEL_MODULES_OUT
     done;
   fi
+  echo "rm -rf $mpath"
   rm -rf $mpath
-  # delete TARGET_KERNEL_MODULES
-  cd $KERNEL_MODULES_OUT
-  for i in cfg80211.ko compat.ko mac80211.ko wl12xx.ko wl12xx_sdio.ko wl12xx_spi.ko
-  do
-    if [ -f $i ]; then
-      echo "rm $i"
-      rm $i
-    fi
-  done
-  cd - > /dev/null
+
+  # run device specific post modules script if one exists
+  if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh ]; then
+    echo "Running modules-post-install.sh..."
+    ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh
+  fi
 }
 
 ################################################################################
