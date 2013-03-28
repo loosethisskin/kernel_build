@@ -33,26 +33,26 @@ build_modules()
   echo "Building modules ..."
   echo ""
 
-  KERNEL_MODULES_INSTALL=$KERNEL_OUT/rootfs/system
-  KERNEL_MODULES_OUT=$KERNEL_MODULES_INSTALL/lib/modules
+  KERNEL_MODULES_INSTALL=$KERNEL_OUT/modules/kernel
+  KERNEL_MODULES_OUT=$KERNEL_OUT/rootfs/system/lib/modules
+  mkdir -p $KERNEL_MODULES_OUT
 
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" modules
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" INSTALL_MOD_PATH=$KERNEL_MODULES_INSTALL modules_install
 
-  mdpath=`find $KERNEL_MODULES_OUT -type f -name modules.order`;
+  mdpath=`find $KERNEL_MODULES_INSTALL -type f -name modules.order`;
   if [ "$mdpath" != "" ]; then
     mpath=`dirname $mdpath`
     ko=`find $mpath/kernel -type f -name *.ko`
     for i in $ko
     do
-      echo "$TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded `echo $i | sed -s "s|$KERNEL_SOURCE_DIR/||"`"
+      echo "$TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded $i"
       $TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded $i
-      echo "mv `echo $i | sed -s "s|$KERNEL_SOURCE_DIR/||"` `echo $KERNEL_MODULES_OUT | sed -s "s|$KERNEL_SOURCE_DIR/||"`"
+      echo "mv $i $KERNEL_MODULES_OUT"
       mv $i $KERNEL_MODULES_OUT
     done;
   fi
-  echo "rm -rf $mpath"
-  rm -rf $mpath
+  #rm -rf $mpath
 
   # run device specific post modules script if one exists
   if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh ]; then
