@@ -1,0 +1,12 @@
+Build instructions (for otter):
+
+cd <kernel source dir>
+export PATH=<path_to_this_repo>/bin:$PATH
+
+# otter needs external wlan and sgx moduiles
+# set CM_ROOT to the CM10.1 root directory
+export CM_ROOT=/u01/dev/android/sgt7/cm10.1
+
+export LOCALVERSION="-$(date +%Y%m%d-%H%M)"
+build.sh otter otter_android_defconfig /u01/dev/android/git/toolchains/linaro/linaro-4.7-2013.02
+build-zip.sh otter
