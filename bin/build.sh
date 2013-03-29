@@ -2,13 +2,14 @@
 
 set -a
 
-build_kernel()
+build_kernel_and_modules()
 {
   # run device specific kernel build script if one exists
   if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh ]; then
     echo "Running ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh..."
     ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh
-    return $?
+    [ $? -ne 0 ] && return 1
+    return 0
   fi
 
   echo ""
@@ -16,17 +17,20 @@ build_kernel()
   echo ""
 
   make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" distclean
+  [ $? -ne 0 ] && return 1
   make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" ${DEFCONFIG}
+  [ $? -ne 0 ] && return 1
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" zImage
-}
+  [ $? -ne 0 ] && return 1
 
-build_modules()
-{
   # run device specific modules build script if one exists
   if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/build-modules.sh ]; then
+    echo ""
     echo "Running ${BUILD_ROOT_DIR}/${DEVICE}/build-modules.sh..."
+    echo ""
     ${BUILD_ROOT_DIR}/${DEVICE}/build_modules.sh
-    return $?
+    [ $? -ne 0 ] && return 1
+    return 0
   fi
 
   echo ""
@@ -38,7 +42,9 @@ build_modules()
   mkdir -p $KERNEL_MODULES_OUT
 
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" modules
+  [ $? -ne 0 ] && return 1
   make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" INSTALL_MOD_PATH=$KERNEL_MODULES_INSTALL modules_install
+  [ $? -ne 0 ] && return 1
 
   mdpath=`find $KERNEL_MODULES_INSTALL -type f -name modules.order`;
   if [ "$mdpath" != "" ]; then
@@ -48,17 +54,39 @@ build_modules()
     do
       echo "$TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded $i"
       $TOOLCHAIN_DIR/bin/arm-eabi-strip --strip-unneeded $i
+      [ $? -ne 0 ] && return 1
       echo "mv $i $KERNEL_MODULES_OUT"
       mv $i $KERNEL_MODULES_OUT
+      [ $? -ne 0 ] && return 1
     done;
   fi
   #rm -rf $mpath
 
   # run device specific post modules script if one exists
   if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh ]; then
+    echo ""
     echo "Running modules-post-install.sh..."
+    echo ""
     ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh
+    [ $? -ne 0 ] && return 1
+    return 0
   fi
+}
+
+run_build()
+{
+  # need this wrapper function because tee'ing the logfile screws up the exit codes
+  build_kernel_and_modules
+  if [ $? -ne 0 ]; then
+    echo ""
+    echo '***** ERROR: Build failed -- check the logs *****'
+    echo ""
+    return 1
+  fi
+  echo ""
+  echo 'Build successful.'
+  echo ""
+  return 0
 }
 
 ################################################################################
@@ -116,9 +144,7 @@ mkdir -p $KERNEL_OUT
 
 START=$(date +%s)
 
-build_kernel 2>&1 | tee -a $LOGFILE
-
-build_modules 2>&1 | tee -a $LOGFILE
+run_build 2>&1 | tee -a $LOGFILE
 
 END=$(date +%s)
 ELAPSED=$((END - START))
