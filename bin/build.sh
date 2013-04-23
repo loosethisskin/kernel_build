@@ -16,11 +16,11 @@ build_kernel_and_modules()
   echo "Building kernel ..."
   echo ""
 
-  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" distclean
+  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" distclean
   [ $? -ne 0 ] && return 1
-  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" ${DEFCONFIG}
+  make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" ${DEFCONFIG}
   [ $? -ne 0 ] && return 1
-  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" zImage
+  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" zImage
   [ $? -ne 0 ] && return 1
 
   # run device specific modules build script if one exists
@@ -41,9 +41,9 @@ build_kernel_and_modules()
   KERNEL_MODULES_OUT=$KERNEL_OUT/rootfs/system/lib/modules
   mkdir -p $KERNEL_MODULES_OUT
 
-  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" modules
+  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" modules
   [ $? -ne 0 ] && return 1
-  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $CCOMPILER" INSTALL_MOD_PATH=$KERNEL_MODULES_INSTALL modules_install
+  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" INSTALL_MOD_PATH=$KERNEL_MODULES_INSTALL modules_install
   [ $? -ne 0 ] && return 1
 
   mdpath=`find $KERNEL_MODULES_INSTALL -type f -name modules.order`;
@@ -123,7 +123,7 @@ v_toolchain=`basename $TOOLCHAIN_DIR`
 v_gcc=gcc-`gcc --version |head -1 |awk '{ print $NF }'`
 
 export PATH=$TOOLCHAIN_DIR/bin:$BUILD_ROOT_DIR/bin:$PATH
-export CCOMPILER="$TOOLCHAIN_DIR/bin/arm-eabi-"
+export ARM_EABI_TOOLCHAIN="$TOOLCHAIN_DIR/bin"
 export CCACHE=$BUILD_ROOT_DIR/bin/ccache
 
 if [ ! "$(ccache -s|grep -E 'max cache size'|awk '{print $4}')" = "10.0" ]; then
