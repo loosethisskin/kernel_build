@@ -39,11 +39,6 @@ fi
 cp $KERNEL_OUT/arch/arm/boot/zImage $TARGET_DIR
 [ $? -ne 0 ] && echo "Error: failed to copy zImage." && exit 1
 
-cp -r $BUILD_ROOT_DIR/$DEVICE/ramdisk $TARGET_DIR/ramdisk
-[ $? -ne 0 ] && echo "Error: failed to copy ramdisk." && exit 1
-
-cd $TARGET_DIR
-
 echo "Building ramdisk..."
 if [ ! -f ${BUILD_ROOT_DIR}/${DEVICE}/make-ramdisk.sh ]; then
   echo "Error: ${DEVICE}/make-ramdisk.sh not found"
