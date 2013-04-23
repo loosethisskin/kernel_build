@@ -1,0 +1,3 @@
+post-build=google/cm_jem/jem:4.2.2/JDQ39E/eng.build.20130421.204301:userdebug/test-keys
+post-timestamp=1366591467
+pre-device=jem
