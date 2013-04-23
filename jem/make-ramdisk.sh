@@ -1,7 +1,12 @@
 #!/bin/bash
 
-echo "cp $BUILD_ROOT_DIR/jem/ramdisk.img $TARGET_DIR"
-cp $BUILD_ROOT_DIR/jem/ramdisk.img $TARGET_DIR
-[ $? -ne 0 ] && echo "Error: failed to copy ramdisk." && exit 1
-
-exit 0
+cd ramdisk
+# make sure all directories are created because git doesn't save empty directories
+mkdir -p data dev proc sbin sys system
+chmod 750 init*
+chmod 750 sbin/adbd
+chmod 644 default.prop
+#chmod 640 fstab.$DEVICE
+chmod 644 ueventd*
+echo "mkbootfs $TARGET_DIR/ramdisk | minigzip > ramdisk.img"
+mkbootfs $TARGET_DIR/ramdisk | minigzip > $TARGET_DIR/ramdisk.img
