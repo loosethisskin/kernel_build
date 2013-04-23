@@ -69,6 +69,8 @@ export zipdir=package
 export zipfile="$TARGET_DIR/kernel_${DEVICE}${LOCALVERSION}.zip"
 
 cp -r boot.img $zipdir
+[ $? -ne 0 ] && exit 1
+
 cd $zipdir
 zip -r $zipfile *
 [ $? -ne 0 ] && echo "Error: failed to build zip file." && exit 1
