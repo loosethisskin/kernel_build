@@ -14,7 +14,7 @@ INTERNAL_BOOTIMAGE_ARGS := --kernel $(PRODUCT_OUT)/zImage --ramdisk $(PRODUCT_OU
 INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/boot.img
 
 define make_stack
-  for i in $$(seq 1024) ; do echo -ne $(BOWSER_BOOT_ADDRESS) >>$(1) ; done
+  for i in $$(seq 1024) ; do /bin/echo -ne $(BOWSER_BOOT_ADDRESS) >>$(1) ; done
 endef
 
 define pretty
