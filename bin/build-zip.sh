@@ -2,6 +2,13 @@
 
 set -a
 
+get_changelog()
+{
+  echo "Saving changelog..."
+  git log --pretty=format:"[%cd] %h - %aN: %s" -n 100 --date=short > $TARGET_DIR/package/changelog.txt
+  return $?
+}
+
 KERNEL_SOURCE_DIR="$PWD"
 SCRIPT_NAME=`basename $0`
 SCRIPT_DIR=`dirname $0`
@@ -65,6 +72,8 @@ export zipfile="$TARGET_DIR/kernel_${DEVICE}${LOCALVERSION}.zip"
 
 cp -r boot.img $zipdir
 [ $? -ne 0 ] && exit 1
+
+get_changelog
 
 cd $zipdir
 zip -r $zipfile *
