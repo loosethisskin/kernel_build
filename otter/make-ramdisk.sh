@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cp -r $BUILD_ROOT_DIR/$DEVICE/ramdisk $TARGET_DIR/ramdisk
+cp -r ${DEVICE_DIR}/ramdisk $TARGET_DIR/ramdisk
 [ $? -ne 0 ] && echo "Error: failed to copy ramdisk." && exit 1
 
 cd $TARGET_DIR/ramdisk
