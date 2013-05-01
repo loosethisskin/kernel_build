@@ -1,5 +1,5 @@
 #!/bin/bash
 
-make -f $BUILD_ROOT_DIR/jem/make-bootimg.mk
+make -f ${DEVICE_DIR}/make-bootimg.mk
 
 exit $?
