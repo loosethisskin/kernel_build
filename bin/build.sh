@@ -5,9 +5,9 @@ set -a
 build_kernel_and_modules()
 {
   # run device specific kernel build script if one exists
-  if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh ]; then
-    echo "Running ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh..."
-    ${BUILD_ROOT_DIR}/${DEVICE}/build-kernel.sh
+  if [ -f ${DEVICE_DIR}/build-kernel.sh ]; then
+    echo "Running ${DEVICE_DIR}/build-kernel.sh..."
+    ${DEVICE_DIR}/build-kernel.sh
     [ $? -ne 0 ] && return 1
     return 0
   fi
@@ -20,15 +20,15 @@ build_kernel_and_modules()
   [ $? -ne 0 ] && return 1
   make O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" ${DEFCONFIG}
   [ $? -ne 0 ] && return 1
-  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" zImage
+  make -j$JOBS O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" zImage
   [ $? -ne 0 ] && return 1
 
   # run device specific modules build script if one exists
-  if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/build-modules.sh ]; then
+  if [ -f ${DEVICE_DIR}/build-modules.sh ]; then
     echo ""
-    echo "Running ${BUILD_ROOT_DIR}/${DEVICE}/build-modules.sh..."
+    echo "Running ${DEVICE_DIR}/build-modules.sh..."
     echo ""
-    ${BUILD_ROOT_DIR}/${DEVICE}/build_modules.sh
+    ${DEVICE_DIR}/build_modules.sh
     [ $? -ne 0 ] && return 1
     return 0
   fi
@@ -41,9 +41,9 @@ build_kernel_and_modules()
   KERNEL_MODULES_OUT=$KERNEL_OUT/rootfs/system/lib/modules
   mkdir -p $KERNEL_MODULES_OUT
 
-  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" modules
+  make -j$JOBS O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" modules
   [ $? -ne 0 ] && return 1
-  make -j$dop O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" INSTALL_MOD_PATH=$KERNEL_MODULES_INSTALL modules_install
+  make -j$JOBS O=$KERNEL_OUT ARCH=arm CROSS_COMPILE="$CCACHE $ARM_EABI_TOOLCHAIN/arm-eabi-" INSTALL_MOD_PATH=$KERNEL_MODULES_INSTALL modules_install
   [ $? -ne 0 ] && return 1
 
   mdpath=`find $KERNEL_MODULES_INSTALL -type f -name modules.order`;
@@ -63,11 +63,11 @@ build_kernel_and_modules()
   #rm -rf $mpath
 
   # run device specific post modules script if one exists
-  if [ -f ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh ]; then
+  if [ -f ${DEVICE_DIR}/modules-post-install.sh ]; then
     echo ""
     echo "Running modules-post-install.sh..."
     echo ""
-    ${BUILD_ROOT_DIR}/${DEVICE}/modules-post-install.sh
+    ${DEVICE_DIR}/modules-post-install.sh
     [ $? -ne 0 ] && return 1
     return 0
   fi
@@ -89,6 +89,94 @@ run_build()
   return 0
 }
 
+usage()
+{
+  echo ""
+  echo "Usage: build.sh [options] <device> <defconfig> <toolchain>"
+  echo ""
+  echo "Options:"
+  echo "-j N, --jobs=N                        Number of jobs"
+  echo "                                      Default is number or processors"
+  echo "-d DIRCTORY, --device-dir=DIRECTORY   Directory containing ramdisk, installer and device specific scripts"
+  echo "                                      Default is <build_root_dir>/<device_name>"
+  echo ""
+  echo "Example:"
+  echo "build.sh -j 4 otter otter_android_defconfig /u01/dev/android/git/toolchains/linaro/linaro-4.7"
+}
+
+get_opts()
+{
+  DEVICE_DIR=""
+  JOBS=""
+  while [ "$#" -gt 0 ]
+  do
+    case "${1}" in
+      -j | --jobs* )
+          if [ "`echo \"${1}\" |grep '=' |wc -l`" -eq 1 ]; then
+            JOBS="`echo \"${1}\" | sed -e 's/^[^=]*=//'`"
+            shift
+          else
+            shift
+            if [ "$#" -lt 1 ]; then
+              echo "missing parameter"
+              usage
+              return 1
+            fi
+            JOBS="$1"
+            shift
+          fi
+          ;;
+      -d | --device-dir* )
+          if [ "`echo \"${1}\" |grep '=' |wc -l`" -eq 1 ]; then
+            DEVICE_DIR="`echo \"${1}\" | sed -e 's/^[^=]*=//'`"
+            shift
+          else
+            shift
+            if [ "$#" -lt 1 ]; then
+              echo "missing parameter"
+              usage
+              return 1
+            fi
+            DEVICE_DIR="$1"
+            shift
+          fi
+          ;;
+      -* )
+          echo "invalid option \"${1}\""
+          usage
+          exit
+          ;;
+      * )
+          break
+          ;;
+     esac
+  done
+
+  if [ -z "$3" ]; then
+    usage
+    exit 1
+  fi
+
+  DEVICE=$1
+  DEFCONFIG=$2
+  TOOLCHAIN_DIR=$3
+
+  if [ -z "$DEVICE_DIR" ]; then
+    DEVICE_DIR=${BUILD_ROOT_DIR}/${DEVICE}
+  else
+    DEVICE_DIR=`readlink -m $DEVICE_DIR`
+  fi
+  [ -z "$JOBS" ] && JOBS=`cat /proc/cpuinfo| grep processor | wc -l`
+
+  echo "--------------------------------------------------------------------------------"
+  echo "KERNEL_SOURCE_DIR = $KERNEL_SOURCE_DIR"
+  echo "BUILD_ROOT_DIR    = $BUILD_ROOT_DIR"
+  echo "DEVICE_DIR        = $DEVICE_DIR"
+  echo "JOBS              = $JOBS"
+  echo "--------------------------------------------------------------------------------"
+
+}
+
 ################################################################################
 # main
 ################################################################################
@@ -98,26 +186,7 @@ SCRIPT_NAME=`basename $0`
 SCRIPT_DIR=`dirname $0`
 BUILD_ROOT_DIR=`readlink -m $SCRIPT_DIR/..`
 
-echo "--------------------------------------------------------------------------------"
-echo KERNEL_SOURCE_DIR=$KERNEL_SOURCE_DIR
-echo SCRIPT_NAME=$SCRIPT_NAME
-echo SCRIPT_DIR=$SCRIPT_DIR
-echo BUILD_ROOT_DIR=$BUILD_ROOT_DIR
-echo "--------------------------------------------------------------------------------"
-
-if [ -z "$3" ]; then
-  echo "usage: build.sh <device> <defconfig> <toolchaindir> [jobs]"
-  echo "example: build.sh otter otter_android_defconfig /u01/dev/android/git/toolchains/linaro/linaro-4.7"
-  exit 1
-fi
-dop="$4"
-if [ -z "$dop" ]; then
-  dop=`cat /proc/cpuinfo| grep processor | wc -l`
-fi
-
-DEVICE=$1
-DEFCONFIG=$2
-TOOLCHAIN_DIR=$3
+get_opts $*
 
 v_toolchain=`basename $TOOLCHAIN_DIR`
 v_gcc=gcc-`gcc --version |head -1 |awk '{ print $NF }'`
