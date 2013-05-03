@@ -195,8 +195,8 @@ export PATH=$TOOLCHAIN_DIR/bin:$BUILD_ROOT_DIR/bin:$PATH
 export ARM_EABI_TOOLCHAIN="$TOOLCHAIN_DIR/bin"
 export CCACHE=$BUILD_ROOT_DIR/bin/ccache
 
-if [ ! "$(ccache -s|grep -E 'max cache size'|awk '{print $4}')" = "10.0" ]; then
-  ccache -M 10G
+if [ ! "$(ccache -s|grep -E 'max cache size'|awk '{print $4}')" = "20.0" ]; then
+  ccache -M 20G
 fi
 
 LOGFILE=build_kernel_${DEVICE}${LOCALVERSION}_${v_toolchain}_${v_gcc}.log
