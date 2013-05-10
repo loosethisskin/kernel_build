@@ -30,6 +30,12 @@ on post-fs-data
     mkdir /cache/trace 0777 system system
     chown system system /cache/trace
 
+# symlink egl.cfg
+    symlink /sys/egl/egl.cfg /system/lib/egl/egl.cfg
+
+# mount system ro
+    mount ext4 /dev/block/platform/omap/omap_hsmmc.1/by-name/system /system ro remount
+
 # camera calibration - DCC folder permission
     chown media media /data/misc/camera
     chown media media /data/misc/camera/R12_MVEN001_LD1_ND0_IR0_SH0_FL0_SVEN001_DCCID43
@@ -51,7 +57,6 @@ on boot
     mount debugfs /sys/kernel/debug /sys/kernel/debug
     chmod 0666 /dev/pvrsrvkm
     setprop ro.crypto.keyfile.userdata /dev/block/platform/omap/omap_hsmmc.1/by-name/crypto
-    setprop persist.hwc.mirroring.transform 3
 
 # autosuspend root hubs immediatly after attached devices
     write /sys/bus/usb/devices/usb1/power/autosuspend_delay_ms 0
@@ -80,7 +85,6 @@ on fs
     mkdir /efs 0775 radio radio
     mount ext4 /dev/block/platform/omap/omap_hsmmc.1/by-name/system /system wait rw
     chmod 0755 /system/vendor/oprofile/oprofile-boot
-    mount ext4 /dev/block/platform/omap/omap_hsmmc.1/by-name/system /system ro remount
     setprop ro.crypto.tmpfs_options size=128m,mode=0771,uid=1000,gid=1000
     mount ext4 /dev/block/platform/omap/omap_hsmmc.1/by-name/userdata /data wait noatime nosuid nodev nomblk_io_submit,commit=20,barrier=0
     mount ext4 /dev/block/platform/omap/omap_hsmmc.1/by-name/cache /cache wait noatime nosuid nodev nomblk_io_submit,commit=20,barrier=0
