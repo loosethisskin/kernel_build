@@ -11,7 +11,7 @@ chmod 750 init*
 chmod 750 sbin/adbd
 chmod 750 sbin/cbd
 chmod 644 default.prop
-chmod 640 fstab.$DEVICE
+chmod 640 fstab.p3
 chmod 644 ueventd*
 chmod 644 lpm.rc
 find . | cpio -o -H newc | gzip > ../ramdisk.cpio.gz
