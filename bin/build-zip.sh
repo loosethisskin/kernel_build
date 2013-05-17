@@ -123,6 +123,12 @@ echo "Building zip file..."
 
 cp -r ${DEVICE_DIR}/installer $TARGET_DIR/package
 cp -r $KERNEL_MODULES_INSTALL $TARGET_DIR/package
+
+# additional files
+if [ -e ${DEVICE_DIR}/package ]; then
+  cp -r ${DEVICE_DIR}/package $TARGET_DIR
+fi
+
 export zipdir=package
 export zipfile="$TARGET_DIR/kernel_${DEVICE}${LOCALVERSION}.zip"
 
