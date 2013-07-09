@@ -96,6 +96,7 @@ on fs
 # pvr module
     insmod /system/lib/modules/pvrsrvkm_sgx544_112.ko
     insmod /system/lib/modules/omaplfb_sgx544_112.ko
+    start pvrsrvinit
 
 on post-fs
     setprop ro.radio.noril yes
@@ -196,6 +197,7 @@ service pvrsrvinit /vendor/bin/pvrsrvinit
     user root
     group root
     oneshot
+    disabled
 
 service camera_dcc /vendor/bin/camera_dcc
     class core
