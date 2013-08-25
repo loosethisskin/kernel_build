@@ -10,6 +10,6 @@ mkdir -p data dev proc sbin sys system
 chmod 750 init*
 chmod 750 sbin/adbd
 chmod 644 default.prop
-chmod 640 fstab.$DEVICE
+chmod 640 fstab.*
 chmod 644 ueventd*
 find . | cpio -o -H newc | gzip > ../ramdisk.cpio.gz
