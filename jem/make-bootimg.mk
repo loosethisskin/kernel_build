@@ -1,3 +1,7 @@
+# see device/amazon/jem/boot.mk
+# see device/amazon/jem/BoardConfig.mk
+# see device/amazon/bowser-common/BoardConfigCommon.mk
+
 DEVICE_FOLDER := $(CM_ROOT)/device/amazon/jem
 
 BOWSER_BOOTLOADER := $(DEVICE_FOLDER)/prebuilt/boot/u-boot.bin
@@ -8,7 +12,7 @@ BOWSER_STACK_FILE := /tmp/stack.tmp
 PRODUCT_OUT := $(TARGET_DIR)
 MKBOOTIMG := mkbootimg
 BOARD_KERNEL_PAGESIZE := 2048
-BOARD_KERNEL_CMDLINE := mem=1G console=/dev/null rootdelay=2 init=/init androidboot.console=ttyO2 androidboot.hardware=bowser vmalloc=496M
+BOARD_KERNEL_CMDLINE := mem=1G console=/dev/null rootdelay=2 init=/init vmalloc=256M androidboot.console=ttyO2 androidboot.hardware=bowser
 BOARD_KERNEL_BASE := 0x80000000
 INTERNAL_BOOTIMAGE_ARGS := --kernel $(PRODUCT_OUT)/zImage --ramdisk $(PRODUCT_OUT)/ramdisk.img --cmdline "$(BOARD_KERNEL_CMDLINE)" --base $(BOARD_KERNEL_BASE) --pagesize $(BOARD_KERNEL_PAGESIZE)
 INSTALLED_BOOTIMAGE_TARGET := $(PRODUCT_OUT)/boot.img
