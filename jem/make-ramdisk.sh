@@ -9,8 +9,10 @@ cd $TARGET_DIR/ramdisk
 mkdir -p data dev proc sbin sys system
 chmod 750 init*
 chmod 750 sbin/adbd
+chmod 750 sbin/healthd
 chmod 644 default.prop
-#chmod 640 fstab.$DEVICE
+chmod 644 sepolicy *_contexts
+chmod 640 fstab.*
 chmod 644 ueventd*
 echo "mkbootfs $TARGET_DIR/ramdisk | minigzip > ramdisk.img"
 mkbootfs $TARGET_DIR/ramdisk | minigzip > $TARGET_DIR/ramdisk.img
