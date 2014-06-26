@@ -1,0 +1,70 @@
+/dev/knvmap	0660	system	system
+/dev/nvmap	0666	system	system
+/dev/tegra_avp	0660	media	media
+/dev/tegra_rpc	0660	media	media
+/dev/tegra_sema	0660	media	media
+/dev/tegra_mediaserver	0660	media	media
+/dev/s5k5ccgx           0660    media   camera
+/dev/s5k5bbgx           0660    media   camera
+# For P3
+/dev/imx073             0660    media   camera
+
+/dev/tegra_camera	0660	media	camera
+/dev/camera*	0660	media	camera
+/dev/focuser*	0660	media	camera
+/dev/torch*	0660	media	camera
+/dev/spdif*	0660	system	audio
+/dev/video0	0660	media	camera
+/dev/video1	0660	media	camera
+/dev/tegra_dc*	0660	system	system
+/dev/ttyACM*    0660    radio   system
+/dev/nvhdcp0    0666    system  system
+/dev/nvhdcp1    0666    system  system
+/dev/storage           0660        system        radio
+/dev/block/mmcblk0     0640        root          radio
+# For P4VZW
+/dev/block/mmcblk0p9     0660        root          radio
+/dev/lte_*      0660    system  radio
+/dev/cdma_*      0660    system  radio
+/dev/multipdp      0660    system  radio
+/dev/ttyGS1      0660    system  radio
+/dev/modem_br      0660    system  radio
+
+/dev/usb_mtp_gadget 0660	system	system
+
+# misc partition (P4VZW: changed to system:radio)
+/dev/block/mmcblk0p6   0660        system        radio
+
+# modem interface
+/dev/umts*      0660    system  radio
+/dev/link_pm    0660    system  radio
+
+# modem partition
+/dev/block/mmcblk0p7   0660        system        radio
+# For P4VZW
+/dev/block/mmcblk0p4   0660        system        radio
+
+# for MPL
+/dev/mpu	0660	system	system
+/dev/mpuirq	0660	system	system
+
+# for AKM8975
+/dev/akm8975	0660	system	system
+
+# for usb printer
+/dev/bus/usb/*         0660        system        usb
+/dev/usb/lp*           0660        system        usb
+
+# rfkill
+/dev/rfkill            0660    wifi    wifi
+
+# Interactive
+/sys/devices/system/cpu/cpufreq interactive/above_hispeed_delay  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/boost  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/boost_factor  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/go_maxspeed_load  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/input_boost  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/io_is_busy  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/max_boost  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/min_sample_time  0664  system  system
+/sys/devices/system/cpu/cpufreq interactive/sustain_load  0664  system  system
