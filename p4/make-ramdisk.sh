@@ -9,9 +9,11 @@ cd $TARGET_DIR/ramdisk
 mkdir -p data dev proc sbin sys system
 chmod 750 init*
 chmod 750 sbin/adbd
+chmod 750 sbin/healthd
 chmod 750 sbin/cbd
 chmod 644 default.prop
 chmod 640 fstab.p3
 chmod 644 ueventd*
+chmod 644 property_contexts file_contexts seapp_contexts sepolicy
 chmod 644 lpm.rc
 find . | cpio -o -H newc | gzip > ../ramdisk.cpio.gz
