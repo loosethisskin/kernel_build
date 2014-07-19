@@ -1,0 +1,3 @@
+post-build=google/cm_otterx/otterx:4.4.4/KTU84Q/e8f2fcd1a3:userdebug/test-keys
+post-timestamp=1405783747
+pre-device=otterx
